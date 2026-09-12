@@ -160,7 +160,6 @@
         .sync-status.online { background: #dcfce7; color: #166534; }
         .sync-status.syncing { background: #fef3c7; color: #92400e; }
 
-        /* PRINT STYLES - Fits single page cleanly by omitting Leave Management */
         @media print {
             body { background: #fff; padding: 0; }
             .container { box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
@@ -178,18 +177,19 @@
     </style>
 </head>
 <body>
-<!-- Firebase Realtime Sync Module -->
-<script type="module">
+
 <div class="container">
-    const firebaseConfig = {
-        apiKey: "AIzaSyDkk8w01GD2mJg-KPzSxe15V9eCSPcigw8",
-        authDomain: "night-duty-roster-d4fd1.firebaseapp.com",
-        databaseURL: "https://night-duty-roster-d4fd1-default-rtdb.firebaseio.com",
-        projectId: "night-duty-roster-d4fd1",
-        storageBucket: "night-duty-roster-d4fd1.firebasestorage.app",
-        messagingSenderId: "869781250238",
-        appId: "1:869781250238:web:47c8829f75c9b0c4d83eef"
-    };
+    <header>
+        <div>
+            <h1 id="monthYearDisplay">September 2026</h1>
+        </div>
+        <div class="controls no-print">
+            <span id="syncStatus" class="sync-status">Local Mode</span>
+            <label style="font-size:0.85rem; font-weight:500;">Print Mode:
+                <select id="printOrientation" onchange="setPrintOrientation(this.value)">
+                    <option value="landscape" selected>Landscape</option>
+                    <option value="portrait">Portrait</option>
+                </select>
             </label>
             <button id="prevBtn" onclick="changeMonth(-1)">&lt; Prev</button>
             <button id="nextBtn" onclick="changeMonth(1)">Next &gt;</button>
@@ -198,13 +198,11 @@
         </div>
     </header>
 
-    <!-- Calendar View -->
     <div class="calendar-header">
         <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
     </div>
     <div id="calendarGrid" class="calendar-grid"></div>
 
-    <!-- Dashboard Section -->
     <div class="dashboard-grid">
         <div class="section-box">
             <h3>Monthly Counts (Scheduled vs Actual)</h3>
@@ -247,7 +245,6 @@
         </div>
     </div>
 
-    <!-- Leave Management Section -->
     <div class="dashboard-grid no-print" style="grid-template-columns: 1fr; margin-top:15px;">
         <div class="section-box">
             <h3>Leave Management</h3>
@@ -277,20 +274,18 @@
     </div>
 </div>
 
-<!-- Firebase Realtime Sync Module (Optional background cloud connector) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // REPLACE WITH YOUR FIREBASE CONFIG WHEN READY
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyDkk8w01GD2mJg-KPzSxe15V9eCSPcigw8",
+        authDomain: "night-duty-roster-d4fd1.firebaseapp.com",
+        databaseURL: "https://night-duty-roster-d4fd1-default-rtdb.firebaseio.com",
+        projectId: "night-duty-roster-d4fd1",
+        storageBucket: "night-duty-roster-d4fd1.firebasestorage.app",
+        messagingSenderId: "869781250238",
+        appId: "1:869781250238:web:47c8829f75c9b0c4d83eef"
     };
 
     let db = null;
@@ -355,7 +350,7 @@
     const NURSE_TONG = 'Nurse Tong';
 
     let currentYear = 2026;
-    let currentMonth = 8; // 8 = September 2026
+    let currentMonth = 8;
     var manualOverrides = {};
     var leaveRecords = [];
     var fairnessBalance = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0 };
@@ -395,9 +390,8 @@
         }
     }
 
-    // STATIC CONFIRMED ROSTERS (Sept 2026 - Feb 2027)
     const APPROVED_ROSTERS = {
-        "2026-8": { // September 2026
+        "2026-8": {
             1: NURSE_TONG, 2: NURSE_TONG, 3: NURSE_TONG,
             4: "Joy", 5: "Joy", 6: "Joy", 7: "Joy", 8: "Joy", 9: "Joy",
             10: NURSE_TONG, 11: NURSE_TONG,
@@ -407,7 +401,7 @@
             26: NURSE_TONG, 27: NURSE_TONG,
             28: "Gina", 29: "Gina", 30: "Gina"
         },
-        "2026-9": { // October 2026
+        "2026-9": {
             1: "Gina", 2: "Gina", 3: "Gina",
             4: NURSE_TONG, 5: NURSE_TONG, 6: NURSE_TONG, 7: NURSE_TONG, 8: NURSE_TONG,
             9: "Joy", 10: "Joy", 11: "Joy", 12: "Joy", 13: "Joy", 14: "Joy",
@@ -417,7 +411,7 @@
             25: "Roselle", 26: "Roselle", 27: "Roselle", 28: "Roselle", 29: "Roselle", 30: "Roselle",
             31: NURSE_TONG
         },
-        "2026-10": { // November 2026
+        "2026-10": {
             1: NURSE_TONG,
             2: "Gina", 3: "Gina", 4: "Gina", 5: "Gina", 6: "Gina", 7: "Gina",
             8: "Roselle", 9: "Roselle", 10: "Roselle", 11: "Roselle", 12: "Roselle", 13: "Roselle",
@@ -425,14 +419,14 @@
             20: "Joy", 21: "Joy", 22: "Joy", 23: "Joy", 24: "Joy", 25: "Joy",
             26: NURSE_TONG, 27: NURSE_TONG, 28: NURSE_TONG, 29: NURSE_TONG, 30: NURSE_TONG
         },
-        "2026-11": { // December 2026
+        "2026-11": {
             1: "Gina", 2: "Gina", 3: "Gina", 4: "Gina", 5: "Gina",
             6: "Roena", 7: "Roena", 8: "Roena", 9: "Roena", 10: "Roena", 11: "Roena",
             12: "Roselle", 13: "Roselle", 14: "Roselle", 15: "Roselle", 16: "Roselle", 17: "Roselle",
             18: "Joy", 19: "Joy", 20: "Joy", 21: "Joy", 22: "Joy", 23: "Joy",
             24: NURSE_TONG, 25: NURSE_TONG, 26: NURSE_TONG, 27: NURSE_TONG, 28: NURSE_TONG, 29: NURSE_TONG, 30: NURSE_TONG, 31: NURSE_TONG
         },
-        "2027-0": { // January 2027
+        "2027-0": {
             1: NURSE_TONG, 2: NURSE_TONG,
             3: "Roselle", 4: "Roselle", 5: "Roselle", 6: "Roselle", 7: "Roselle", 8: "Roselle",
             9: "Roena", 10: "Roena", 11: "Roena", 12: "Roena", 13: "Roena", 14: "Roena",
@@ -441,7 +435,7 @@
             25: "Gina", 26: "Gina", 27: "Gina", 28: "Gina", 29: "Gina", 30: "Gina",
             31: "Roselle"
         },
-        "2027-1": { // February 2027
+        "2027-1": {
             1: "Roselle", 2: "Roselle", 3: "Roselle", 4: "Roselle", 5: "Roselle",
             6: "Roena", 7: "Roena", 8: "Roena", 9: "Roena", 10: "Roena", 11: "Roena",
             12: "Joy", 13: "Joy", 14: "Joy", 15: "Joy", 16: "Joy", 17: "Joy",
