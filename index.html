@@ -5,128 +5,141 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Night Duty Roster Manager</title>
   
-  <!-- Firebase Libraries -->
+  <!-- Firebase Compatibility SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <style>
-    :root {
-      --primary-color: #1a365d;
-      --secondary-color: #2b6cb0;
-      --accent-color: #319795;
-      --bg-color: #f7fafc;
-      --card-bg: #ffffff;
-      --text-color: #2d3748;
-      --border-color: #e2e8f0;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f6f9;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 15px; }
-
-    .container { max-width: 1200px; margin: 0 auto; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
-
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
-    h1 { color: var(--primary-color); font-size: 1.5rem; }
-
-    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    select, input, button { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; }
-    button { background-color: var(--secondary-color); color: white; border: none; cursor: pointer; transition: background 0.2s; min-height: 38px; }
-    button:hover { background-color: var(--primary-color); }
-
-    .sync-status { font-size: 0.8rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; display: inline-block; }
-    .status-online { background-color: #c6f6d5; color: #22543d; }
-    .status-offline { background-color: #fed7d7; color: #742a2a; }
-
-    /* Calendar Grid Layout */
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 25px; }
-    .day-header { text-align: center; font-weight: bold; background: var(--primary-color); color: white; padding: 8px; border-radius: 4px; font-size: 0.85rem; }
-    .day-cell { border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; min-height: 90px; background: #fff; display: flex; flex-direction: column; justify-content: space-between; }
-    .day-cell.other-month { background: #f7fafc; opacity: 0.5; }
-    .day-number { font-weight: bold; font-size: 0.85rem; color: #718096; }
-
-    .assigned-person { font-weight: bold; color: var(--secondary-color); margin: 4px 0; font-size: 0.95rem; }
-    .override-select { width: 100%; font-size: 0.8rem; padding: 4px; border-radius: 4px; margin-top: 4px; }
-
-    /* Tables & Responsive Wrappers */
-    .table-container { overflow-x: auto; margin-bottom: 25px; border: 1px solid var(--border-color); border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; background: white; text-align: left; font-size: 0.9rem; }
-    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); }
-    th { background-color: var(--primary-color); color: white; font-weight: 600; }
-
-    /* Mobile Enhancements */
-    @media (max-width: 768px) {
-      body { padding: 8px; }
-      .container { padding: 12px; }
-      header { flex-direction: column; align-items: stretch; }
-      .controls { flex-direction: column; align-items: stretch; }
-      .controls select, .controls button { width: 100%; }
-
-      /* Mobile Grid Adjustments */
-      .calendar-grid { grid-template-columns: repeat(7, minmax(45px, 1fr)); overflow-x: auto; padding-bottom: 8px; }
-      .day-cell { min-height: 80px; padding: 4px; }
-      .assigned-person { font-size: 0.8rem; }
-      .override-select { font-size: 0.75rem; padding: 2px; }
+    h1, h2 {
+      color: #333;
     }
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button, select {
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      background-color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .day-header {
+      font-weight: bold;
+      text-align: center;
+      background-color: #e2e8f0;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .day-cell {
+      border: 1px solid #cbd5e0;
+      min-height: 80px;
+      padding: 5px;
+      border-radius: 4px;
+      background-color: #fafafa;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .day-number {
+      font-weight: bold;
+      font-size: 12px;
+      color: #4a5568;
+    }
+    .person-tag {
+      font-weight: bold;
+      padding: 4px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 13px;
+      margin: 2px 0;
+    }
+    /* Original Helper Colors */
+    .bg-Gina { background-color: #fed7d7; color: #9b2c2c; }
+    .bg-Joy { background-color: #feebc8; color: #9c4221; }
+    .bg-Roena { background-color: #c6f6d5; color: #22543d; }
+    .bg-Roselle { background-color: #e9d8fd; color: #553c9a; }
+    .bg-NurseTong { background-color: #bee3f8; color: #2b6cb0; }
 
-    /* Print Formatting */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #edf2f7;
+    }
+    
     @media print {
-      body { background: white; padding: 0; }
-      .container { box-shadow: none; max-width: 100%; padding: 0; }
-      .controls, .sync-status, .override-select { display: none !important; }
-      .table-container { border: none; }
-      table { font-size: 10pt; }
-      .day-cell { min-height: 60px; border: 1px solid #ccc; }
+      .controls, .override-select { display: none !important; }
+      body { background: white; margin: 0; }
+      .calendar, table { box-shadow: none; }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <div>
-        <h1>Night Duty Roster Manager</h1>
-        <span id="syncStatus" class="sync-status status-offline">Connecting...</span>
-      </div>
-      <div class="controls">
-        <label for="monthPicker">Select Month: </label>
-        <input type="month" id="monthPicker">
-        <button onclick="window.print()">Print Roster</button>
-      </div>
-    </header>
+  <h1>Night Duty Roster Manager</h1>
 
-    <div id="calendarGrid" class="calendar-grid"></div>
-
-    <h2>Monthly Shift Counts</h2>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Helper / Filler</th>
-            <th>Regular Shifts</th>
-            <th>Leaves Given Away</th>
-            <th>Cover Shifts Picked Up</th>
-            <th>Total Net Shifts</th>
-          </tr>
-        </thead>
-        <tbody id="countsTableBody"></tbody>
-      </table>
-    </div>
-
-    <h2>Fairness Balance Ledger</h2>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Helper Name</th>
-            <th>Cumulative Target</th>
-            <th>Actual Worked</th>
-            <th>Fairness Balance Variance</th>
-          </tr>
-        </thead>
-        <tbody id="fairnessTableBody"></tbody>
-      </table>
-    </div>
+  <div class="controls">
+    <button onclick="changeMonth(-1)">Previous Month</button>
+    <strong id="monthDisplay" style="font-size: 18px;"></strong>
+    <button onclick="changeMonth(1)">Next Month</button>
+    <button onclick="window.print()" style="margin-left: auto;">Print Roster</button>
   </div>
+
+  <div class="calendar" id="calendar"></div>
+
+  <h2>Monthly Shift Counts</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Helper</th>
+        <th>Regular Shifts</th>
+        <th>Leaves Given Away</th>
+        <th>Cover Shifts Picked Up</th>
+        <th>Total Net Shifts</th>
+      </tr>
+    </thead>
+    <tbody id="countsTable"></tbody>
+  </table>
+
+  <h2>Fairness Balance Ledger</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Helper Name</th>
+        <th>Cumulative Target</th>
+        <th>Actual Worked</th>
+        <th>Fairness Balance Variance</th>
+      </tr>
+    </thead>
+    <tbody id="fairnessTable"></tbody>
+  </table>
 
   <script>
     // Firebase Configuration
@@ -141,42 +154,31 @@
       measurementId: "G-M0HCTP5QB9"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const helpers = ["Gina", "Joy", "Roena", "Roselle"];
-    const allAssignees = ["Gina", "Joy", "Roena", "Roselle", "Nurse Tong"];
+    const allPeople = ["Gina", "Joy", "Roena", "Roselle", "Nurse Tong"];
 
-    let currentYearMonth = new Date().toISOString().slice(0, 7);
+    let currentDate = new Date();
     let overrides = {};
 
-    const monthPicker = document.getElementById('monthPicker');
-    const syncStatus = document.getElementById('syncStatus');
-    monthPicker.value = currentYearMonth;
-
-    // Listen for Cloud Database Changes
+    // Live Sync with Firebase
     db.ref("roster_overrides").on("value", (snapshot) => {
       overrides = snapshot.val() || {};
-      syncStatus.textContent = "Live Cloud Synced";
-      syncStatus.className = "sync-status status-online";
-      renderRoster();
-    }, (error) => {
-      console.error("Sync Error:", error);
-      syncStatus.textContent = "Offline Mode";
-      syncStatus.className = "sync-status status-offline";
+      render();
     });
 
-    monthPicker.addEventListener('change', (e) => {
-      currentYearMonth = e.target.value;
-      renderRoster();
-    });
-
-    function getDaysInMonth(year, month) {
-      return new Date(year, month + 1, 0).getDate();
+    function changeMonth(delta) {
+      currentDate.setMonth(currentDate.getMonth() + delta);
+      render();
     }
 
-    function handleOverrideChange(dateKey, value) {
+    function getClass(name) {
+      return 'bg-' + name.replace(/\s+/g, '');
+    }
+
+    function setOverride(dateKey, value) {
       if (value === "DEFAULT") {
         db.ref("roster_overrides/" + dateKey).remove();
       } else {
@@ -184,104 +186,94 @@
       }
     }
 
-    function renderRoster() {
-      const [yearStr, monthStr] = currentYearMonth.split("-");
-      const year = parseInt(yearStr, 10);
-      const month = parseInt(monthStr, 10) - 1;
+    function render() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      document.getElementById('monthDisplay').textContent = `${monthNames[month]} ${year}`;
 
       const firstDay = new Date(year, month, 1).getDay();
-      const totalDays = getDaysInMonth(year, month);
+      const totalDays = new Date(year, month + 1, 0).getDate();
 
-      const calendarGrid = document.getElementById('calendarGrid');
-      calendarGrid.innerHTML = '';
+      const calendarEl = document.getElementById('calendar');
+      calendarEl.innerHTML = '';
 
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      dayNames.forEach(name => {
-        const header = document.createElement('div');
-        header.className = 'day-header';
-        header.textContent = name;
-        calendarGrid.appendChild(header);
+      const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      daysOfWeek.forEach(d => {
+        calendarEl.innerHTML += `<div class="day-header">${d}</div>`;
       });
 
       for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'day-cell other-month';
-        calendarGrid.appendChild(emptyCell);
+        calendarEl.innerHTML += `<div></div>`;
       }
 
-      let monthlyCounts = {};
-      allAssignees.forEach(a => monthlyCounts[a] = { regular: 0, leaves: 0, covers: 0, total: 0 });
+      let counts = {};
+      allPeople.forEach(p => counts[p] = { regular: 0, leaves: 0, covers: 0, total: 0 });
 
       for (let day = 1; day <= totalDays; day++) {
-        const dateKey = `${currentYearMonth}-${String(day).padStart(2, '0')}`;
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        // Original rotation sequence logic
         const defaultPerson = helpers[(day - 1) % helpers.length];
-        const actualPerson = overrides[dateKey] || defaultPerson;
+        const assignedPerson = overrides[dateKey] || defaultPerson;
 
-        // Tallying Logic
         if (overrides[dateKey]) {
-          monthlyCounts[defaultPerson].leaves++;
-          monthlyCounts[actualPerson].covers++;
+          counts[defaultPerson].leaves++;
+          counts[assignedPerson].covers++;
         } else {
-          monthlyCounts[defaultPerson].regular++;
+          counts[defaultPerson].regular++;
         }
-        monthlyCounts[actualPerson].total++;
-
-        // Render Day Cell
-        const cell = document.createElement('div');
-        cell.className = 'day-cell';
+        counts[assignedPerson].total++;
 
         let selectOptions = `<option value="DEFAULT" ${!overrides[dateKey] ? 'selected' : ''}>Auto (${defaultPerson})</option>`;
-        allAssignees.forEach(p => {
+        allPeople.forEach(p => {
           selectOptions += `<option value="${p}" ${overrides[dateKey] === p ? 'selected' : ''}>${p}</option>`;
         });
 
-        cell.innerHTML = `
-          <div class="day-number">${day}</div>
-          <div class="assigned-person">${actualPerson}</div>
-          <select class="override-select" onchange="handleOverrideChange('${dateKey}', this.value)">
-            ${selectOptions}
-          </select>
+        calendarEl.innerHTML += `
+          <div class="day-cell">
+            <div class="day-number">${day}</div>
+            <div class="person-tag ${getClass(assignedPerson)}">${assignedPerson}</div>
+            <select class="override-select" onchange="setOverride('${dateKey}', this.value)">
+              ${selectOptions}
+            </select>
+          </div>
         `;
-        calendarGrid.appendChild(cell);
       }
 
-      renderCountsTable(monthlyCounts);
-      renderFairnessTable(monthlyCounts, totalDays);
-    }
-
-    function renderCountsTable(counts) {
-      const tbody = document.getElementById('countsTableBody');
-      tbody.innerHTML = '';
-      allAssignees.forEach(person => {
-        const data = counts[person];
-        const row = `<tr>
-          <td><strong>${person}</strong></td>
-          <td>${data.regular}</td>
-          <td>${data.leaves}</td>
-          <td>${data.covers}</td>
-          <td><strong>${data.total}</strong></td>
-        </tr>`;
-        tbody.innerHTML += row;
+      // Render Shift Table
+      const countsTbody = document.getElementById('countsTable');
+      countsTbody.innerHTML = '';
+      allPeople.forEach(p => {
+        countsTbody.innerHTML += `
+          <tr>
+            <td><strong>${p}</strong></td>
+            <td>${counts[p].regular}</td>
+            <td>${counts[p].leaves}</td>
+            <td>${counts[p].covers}</td>
+            <td><strong>${counts[p].total}</strong></td>
+          </tr>
+        `;
       });
-    }
 
-    function renderFairnessTable(counts, totalDays) {
-      const tbody = document.getElementById('fairnessTableBody');
-      tbody.innerHTML = '';
-      const targetPerHelper = (totalDays / helpers.length).toFixed(1);
+      // Render Fairness Table
+      const fairnessTbody = document.getElementById('fairnessTable');
+      fairnessTbody.innerHTML = '';
+      const target = Math.round(totalDays / helpers.length);
 
-      helpers.forEach(person => {
-        const actual = counts[person].total;
-        const variance = (actual - targetPerHelper).toFixed(1);
-        const varianceDisplay = variance > 0 ? `+${variance}` : variance;
-
-        const row = `<tr>
-          <td><strong>${person}</strong></td>
-          <td>${targetPerHelper}</td>
-          <td>${actual}</td>
-          <td><strong style="color: ${variance < 0 ? '#e53e3e' : '#2b6cb0'};">${varianceDisplay}</strong></td>
-        </tr>`;
-        tbody.innerHTML += row;
+      helpers.forEach(p => {
+        const actual = counts[p].total;
+        const variance = actual - target;
+        const varText = variance > 0 ? `+${variance}` : `${variance}`;
+        fairnessTbody.innerHTML += `
+          <tr>
+            <td><strong>${p}</strong></td>
+            <td>${target}</td>
+            <td>${actual}</td>
+            <td><strong>${varText}</strong></td>
+          </tr>
+        `;
       });
     }
   </script>
