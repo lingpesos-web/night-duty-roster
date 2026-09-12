@@ -1,696 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Night Duty Roster Manager</title>
-    <style id="printOrientationStyle">
-        @page { size: landscape; margin: 0.5cm; }
-    </style>
-    <style>
-        :root {
-            --color-gina: #2563eb;
-            --color-joy: #16a34a;
-            --color-roena: #d97706;
-            --color-roselle: #9333ea;
-            --color-tong: #dc2626;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Night Duty Roster Manager</title>
+  
+  <!-- Firebase Libraries -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f8fafc;
-            color: #1e293b;
-        }
+  <style>
+    :root {
+      --primary-color: #1a365d;
+      --secondary-color: #2b6cb0;
+      --accent-color: #319795;
+      --bg-color: #f7fafc;
+      --card-bg: #ffffff;
+      --text-color: #2d3748;
+      --border-color: #e2e8f0;
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 15px; }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 12px;
-        }
+    .container { max-width: 1200px; margin: 0 auto; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
 
-        h1 { margin: 0; font-size: 1.5rem; color: #0f172a; }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
+    h1 { color: var(--primary-color); font-size: 1.5rem; }
 
-        .controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    select, input, button { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; }
+    button { background-color: var(--secondary-color); color: white; border: none; cursor: pointer; transition: background 0.2s; min-height: 38px; }
+    button:hover { background-color: var(--primary-color); }
 
-        button, select {
-            padding: 6px 12px;
-            border: 1px solid #cbd5e1;
-            background: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
+    .sync-status { font-size: 0.8rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; display: inline-block; }
+    .status-online { background-color: #c6f6d5; color: #22543d; }
+    .status-offline { background-color: #fed7d7; color: #742a2a; }
 
-        button:hover { background: #f1f5f9; }
-        button:disabled { opacity: 0.4; cursor: not-allowed; }
-        button.btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-        button.btn-primary:hover { background: #1d4ed8; }
-        button.btn-danger { background: #ef4444; color: #fff; border-color: #ef4444; }
+    /* Calendar Grid Layout */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 25px; }
+    .day-header { text-align: center; font-weight: bold; background: var(--primary-color); color: white; padding: 8px; border-radius: 4px; font-size: 0.85rem; }
+    .day-cell { border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; min-height: 90px; background: #fff; display: flex; flex-direction: column; justify-content: space-between; }
+    .day-cell.other-month { background: #f7fafc; opacity: 0.5; }
+    .day-number { font-weight: bold; font-size: 0.85rem; color: #718096; }
 
-        .helper-gina { color: var(--color-gina); font-weight: bold; }
-        .helper-joy { color: var(--color-joy); font-weight: bold; }
-        .helper-roena { color: var(--color-roena); font-weight: bold; }
-        .helper-roselle { color: var(--color-roselle); font-weight: bold; }
-        .helper-tong { color: var(--color-tong); font-weight: bold; }
+    .assigned-person { font-weight: bold; color: var(--secondary-color); margin: 4px 0; font-size: 0.95rem; }
+    .override-select { width: 100%; font-size: 0.8rem; padding: 4px; border-radius: 4px; margin-top: 4px; }
 
-        .calendar-header {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.95rem;
-            background: #f1f5f9;
-            padding: 8px 0;
-            border: 1px solid #cbd5e1;
-            border-bottom: none;
-        }
+    /* Tables & Responsive Wrappers */
+    .table-container { overflow-x: auto; margin-bottom: 25px; border: 1px solid var(--border-color); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; background: white; text-align: left; font-size: 0.9rem; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); }
+    th { background-color: var(--primary-color); color: white; font-weight: 600; }
 
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            border: 1px solid #cbd5e1;
-        }
+    /* Mobile Enhancements */
+    @media (max-width: 768px) {
+      body { padding: 8px; }
+      .container { padding: 12px; }
+      header { flex-direction: column; align-items: stretch; }
+      .controls { flex-direction: column; align-items: stretch; }
+      .controls select, .controls button { width: 100%; }
 
-        .day-cell {
-            min-height: 75px;
-            border: 1px solid #e2e8f0;
-            padding: 6px;
-            background: #fff;
-            position: relative;
-        }
+      /* Mobile Grid Adjustments */
+      .calendar-grid { grid-template-columns: repeat(7, minmax(45px, 1fr)); overflow-x: auto; padding-bottom: 8px; }
+      .day-cell { min-height: 80px; padding: 4px; }
+      .assigned-person { font-size: 0.8rem; }
+      .override-select { font-size: 0.75rem; padding: 2px; }
+    }
 
-        .day-cell.empty { background: #f8fafc; }
-        .day-num { font-weight: bold; font-size: 0.85rem; color: #64748b; }
-
-        .assignment {
-            margin-top: 4px;
-            font-size: 1.05rem;
-            text-align: center;
-        }
-
-        .override-marker { color: #dc2626; font-weight: bold; margin-left: 2px; }
-
-        .cell-actions { margin-top: 4px; text-align: center; }
-        .cell-actions select { font-size: 0.75rem; padding: 2px; }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .section-box {
-            border: 1px solid #e2e8f0;
-            padding: 16px;
-            border-radius: 6px;
-            background: #fafafa;
-        }
-
-        .section-box h3 { margin: 0 0 8px 0; font-size: 1.1rem; color: #334155; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
-        th, td {
-            border: 1px solid #cbd5e1;
-            padding: 6px 8px;
-            text-align: center;
-        }
-
-        th { background: #f1f5f9; }
-
-        .leave-form {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            font-size: 0.85rem;
-        }
-
-        /* PRINT STYLES - Fits single page cleanly by omitting Leave Management */
-        @media print {
-            body { background: #fff; padding: 0; }
-            .container { box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
-            .no-print { display: none !important; }
-            .day-cell { min-height: 58px !important; padding: 4px !important; }
-            .assignment { font-size: 0.95rem !important; margin-top: 2px !important; }
-            .calendar-header { padding: 6px 0 !important; font-size: 0.85rem !important; }
-            .dashboard-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; margin-top: 12px !important; }
-            .section-box { padding: 10px !important; }
-            table { font-size: 0.8rem !important; }
-            th, td { padding: 4px 6px !important; }
-            h1 { font-size: 1.25rem !important; }
-            * { page-break-inside: avoid !important; }
-        }
-    </style>
+    /* Print Formatting */
+    @media print {
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; max-width: 100%; padding: 0; }
+      .controls, .sync-status, .override-select { display: none !important; }
+      .table-container { border: none; }
+      table { font-size: 10pt; }
+      .day-cell { min-height: 60px; border: 1px solid #ccc; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
+  <div class="container">
     <header>
-        <div>
-            <h1 id="monthYearDisplay">September 2026</h1>
-        </div>
-        <div class="controls no-print">
-            <label style="font-size:0.85rem; font-weight:500;">Print Mode:
-                <select id="printOrientation" onchange="setPrintOrientation(this.value)">
-                    <option value="landscape" selected>Landscape</option>
-                    <option value="portrait">Portrait</option>
-                </select>
-            </label>
-            <button id="prevBtn" onclick="changeMonth(-1)">&lt; Prev</button>
-            <button id="nextBtn" onclick="changeMonth(1)">Next &gt;</button>
-            <button onclick="resetMonthOverrides()" class="btn-danger">Reset Month Overrides</button>
-            <button onclick="window.print()" class="btn-primary">Print Roster</button>
-        </div>
+      <div>
+        <h1>Night Duty Roster Manager</h1>
+        <span id="syncStatus" class="sync-status status-offline">Connecting...</span>
+      </div>
+      <div class="controls">
+        <label for="monthPicker">Select Month: </label>
+        <input type="month" id="monthPicker">
+        <button onclick="window.print()">Print Roster</button>
+      </div>
     </header>
 
-    <!-- Calendar View -->
-    <div class="calendar-header">
-        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-    </div>
     <div id="calendarGrid" class="calendar-grid"></div>
 
-    <!-- Dashboard Section -->
-    <div class="dashboard-grid">
-        <div class="section-box">
-            <h3>Monthly Counts (Scheduled vs Actual)</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th class="helper-gina">Gina</th>
-                        <th class="helper-joy">Joy</th>
-                        <th class="helper-roena">Roena</th>
-                        <th class="helper-roselle">Roselle</th>
-                        <th class="helper-tong">Tong</th>
-                    </tr>
-                </thead>
-                <tbody id="scheduledActualBody"></tbody>
-            </table>
-        </div>
-
-        <div class="section-box">
-            <h3>Fairness Balance System</h3>
-            <p style="font-size:0.8rem; color:#64748b; margin:0 0 6px 0;">
-                Two-way ledger: <strong>+1</strong> for day off, <strong>-1</strong> for extra shift.
-            </p>
-            <table>
-                <thead>
-                    <tr>
-                        <th class="helper-gina">Gina</th>
-                        <th class="helper-joy">Joy</th>
-                        <th class="helper-roena">Roena</th>
-                        <th class="helper-roselle">Roselle</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr id="fairnessRow"></tr>
-                </tbody>
-            </table>
-            <div style="text-align:right; margin-top:6px;" class="no-print">
-                <button style="font-size:0.75rem; padding:2px 6px;" onclick="resetFairnessBalance()">Clear All Fairness (Reset to 0)</button>
-            </div>
-        </div>
+    <h2>Monthly Shift Counts</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Helper / Filler</th>
+            <th>Regular Shifts</th>
+            <th>Leaves Given Away</th>
+            <th>Cover Shifts Picked Up</th>
+            <th>Total Net Shifts</th>
+          </tr>
+        </thead>
+        <tbody id="countsTableBody"></tbody>
+      </table>
     </div>
 
-    <!-- Leave Management (Classified as no-print to keep single-page printout clean) -->
-    <div class="dashboard-grid no-print" style="grid-template-columns: 1fr; margin-top:15px;">
-        <div class="section-box">
-            <h3>Leave Management</h3>
-            <div class="leave-form">
-                <select id="leaveHelper">
-                    <option value="Gina">Gina</option>
-                    <option value="Joy">Joy</option>
-                    <option value="Roena">Roena</option>
-                    <option value="Roselle">Roselle</option>
-                </select>
-                <label>From: <input type="date" id="leaveFrom"></label>
-                <label>To: <input type="date" id="leaveTo"></label>
-                <button onclick="addLeaveRecord()" class="btn-primary">Add Leave</button>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Helper</th>
-                        <th>From Date</th>
-                        <th>To Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="leaveTableBody"></tbody>
-            </table>
-        </div>
+    <h2>Fairness Balance Ledger</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Helper Name</th>
+            <th>Cumulative Target</th>
+            <th>Actual Worked</th>
+            <th>Fairness Balance Variance</th>
+          </tr>
+        </thead>
+        <tbody id="fairnessTableBody"></tbody>
+      </table>
     </div>
-</div>
+  </div>
 
-<script>
-    const HELPERS = {
-        'Gina': { name: 'Gina', day: 1, class: 'helper-gina' },
-        'Joy': { name: 'Joy', day: 5, class: 'helper-joy' },
-        'Roena': { name: 'Roena', day: 6, class: 'helper-roena' },
-        'Roselle': { name: 'Roselle', day: 0, class: 'helper-roselle' }
-    };
-    const NURSE_TONG = 'Nurse Tong';
-
-    // Starting boundary: September 2026 (Month index 8)
-    let currentYear = 2026;
-    let currentMonth = 8; // 8 = September
-    let manualOverrides = {};
-    let leaveRecords = [];
-    let fairnessBalance = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0 };
-
-    window.onload = function() {
-        loadLocalStorage();
-        render();
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDkk8w01GD2mJg-KPzSxe15V9eCSPcigw8",
+      authDomain: "night-duty-roster-d4fd1.firebaseapp.com",
+      databaseURL: "https://night-duty-roster-d4fd1-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "night-duty-roster-d4fd1",
+      storageBucket: "night-duty-roster-d4fd1.firebasestorage.app",
+      messagingSenderId: "869781250238",
+      appId: "1:869781250238:web:47c8829f75c9b0c4d83eef",
+      measurementId: "G-M0HCTP5QB9"
     };
 
-    function setPrintOrientation(mode) {
-        const styleTag = document.getElementById('printOrientationStyle');
-        if (mode === 'portrait') {
-            styleTag.innerHTML = '@page { size: portrait; margin: 0.5cm; }';
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const helpers = ["Gina", "Joy", "Roena", "Roselle"];
+    const allAssignees = ["Gina", "Joy", "Roena", "Roselle", "Nurse Tong"];
+
+    let currentYearMonth = new Date().toISOString().slice(0, 7);
+    let overrides = {};
+
+    const monthPicker = document.getElementById('monthPicker');
+    const syncStatus = document.getElementById('syncStatus');
+    monthPicker.value = currentYearMonth;
+
+    // Listen for Cloud Database Changes
+    db.ref("roster_overrides").on("value", (snapshot) => {
+      overrides = snapshot.val() || {};
+      syncStatus.textContent = "Live Cloud Synced";
+      syncStatus.className = "sync-status status-online";
+      renderRoster();
+    }, (error) => {
+      console.error("Sync Error:", error);
+      syncStatus.textContent = "Offline Mode";
+      syncStatus.className = "sync-status status-offline";
+    });
+
+    monthPicker.addEventListener('change', (e) => {
+      currentYearMonth = e.target.value;
+      renderRoster();
+    });
+
+    function getDaysInMonth(year, month) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function handleOverrideChange(dateKey, value) {
+      if (value === "DEFAULT") {
+        db.ref("roster_overrides/" + dateKey).remove();
+      } else {
+        db.ref("roster_overrides/" + dateKey).set(value);
+      }
+    }
+
+    function renderRoster() {
+      const [yearStr, monthStr] = currentYearMonth.split("-");
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10) - 1;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const totalDays = getDaysInMonth(year, month);
+
+      const calendarGrid = document.getElementById('calendarGrid');
+      calendarGrid.innerHTML = '';
+
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      dayNames.forEach(name => {
+        const header = document.createElement('div');
+        header.className = 'day-header';
+        header.textContent = name;
+        calendarGrid.appendChild(header);
+      });
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'day-cell other-month';
+        calendarGrid.appendChild(emptyCell);
+      }
+
+      let monthlyCounts = {};
+      allAssignees.forEach(a => monthlyCounts[a] = { regular: 0, leaves: 0, covers: 0, total: 0 });
+
+      for (let day = 1; day <= totalDays; day++) {
+        const dateKey = `${currentYearMonth}-${String(day).padStart(2, '0')}`;
+        const defaultPerson = helpers[(day - 1) % helpers.length];
+        const actualPerson = overrides[dateKey] || defaultPerson;
+
+        // Tallying Logic
+        if (overrides[dateKey]) {
+          monthlyCounts[defaultPerson].leaves++;
+          monthlyCounts[actualPerson].covers++;
         } else {
-            styleTag.innerHTML = '@page { size: landscape; margin: 0.5cm; }';
+          monthlyCounts[defaultPerson].regular++;
         }
-    }
+        monthlyCounts[actualPerson].total++;
 
-    function loadLocalStorage() {
-        const storedOverrides = localStorage.getItem('roster_overrides');
-        if (storedOverrides) manualOverrides = JSON.parse(storedOverrides);
+        // Render Day Cell
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
 
-        const storedLeave = localStorage.getItem('roster_leave');
-        if (storedLeave) leaveRecords = JSON.parse(storedLeave);
-
-        const storedFairness = localStorage.getItem('roster_fairness');
-        if (storedFairness) fairnessBalance = JSON.parse(storedFairness);
-    }
-
-    function saveLocalStorage() {
-        localStorage.setItem('roster_overrides', JSON.stringify(manualOverrides));
-        localStorage.setItem('roster_leave', JSON.stringify(leaveRecords));
-        localStorage.setItem('roster_fairness', JSON.stringify(fairnessBalance));
-    }
-
-    // STATIC CONFIRMED ROSTERS (Sept 2026 - Feb 2027)
-    const APPROVED_ROSTERS = {
-        "2026-8": { // September 2026
-            1: NURSE_TONG, 2: NURSE_TONG, 3: NURSE_TONG,
-            4: "Joy", 5: "Joy", 6: "Joy", 7: "Joy", 8: "Joy", 9: "Joy",
-            10: NURSE_TONG, 11: NURSE_TONG,
-            12: "Roena", 13: "Roena", 14: "Roena", 15: "Roena", 16: "Roena", 17: "Roena",
-            18: NURSE_TONG, 19: NURSE_TONG,
-            20: "Roselle", 21: "Roselle", 22: "Roselle", 23: "Roselle", 24: "Roselle", 25: "Roselle",
-            26: NURSE_TONG, 27: NURSE_TONG,
-            28: "Gina", 29: "Gina", 30: "Gina" // Gina finishes Oct 1-3
-        },
-        "2026-9": { // October 2026
-            1: "Gina", 2: "Gina", 3: "Gina",
-            4: NURSE_TONG, 5: NURSE_TONG, 6: NURSE_TONG, 7: NURSE_TONG, 8: NURSE_TONG,
-            9: "Joy", 10: "Joy", 11: "Joy", 12: "Joy", 13: "Joy", 14: "Joy",
-            15: NURSE_TONG, 16: NURSE_TONG,
-            17: "Roena", 18: "Roena", 19: "Roena", 20: "Roena", 21: "Roena", 22: "Roena",
-            23: NURSE_TONG, 24: NURSE_TONG,
-            25: "Roselle", 26: "Roselle", 27: "Roselle", 28: "Roselle", 29: "Roselle", 30: "Roselle",
-            31: NURSE_TONG
-        },
-        "2026-10": { // November 2026
-            1: NURSE_TONG,
-            2: "Gina", 3: "Gina", 4: "Gina", 5: "Gina", 6: "Gina", 7: "Gina",
-            8: "Roselle", 9: "Roselle", 10: "Roselle", 11: "Roselle", 12: "Roselle", 13: "Roselle",
-            14: "Roena", 15: "Roena", 16: "Roena", 17: "Roena", 18: "Roena", 19: "Roena",
-            20: "Joy", 21: "Joy", 22: "Joy", 23: "Joy", 24: "Joy", 25: "Joy",
-            26: NURSE_TONG, 27: NURSE_TONG, 28: NURSE_TONG, 29: NURSE_TONG, 30: NURSE_TONG
-        },
-        "2026-11": { // December 2026
-            1: "Gina", 2: "Gina", 3: "Gina", 4: "Gina", 5: "Gina",
-            6: "Roena", 7: "Roena", 8: "Roena", 9: "Roena", 10: "Roena", 11: "Roena",
-            12: "Roselle", 13: "Roselle", 14: "Roselle", 15: "Roselle", 16: "Roselle", 17: "Roselle",
-            18: "Joy", 19: "Joy", 20: "Joy", 21: "Joy", 22: "Joy", 23: "Joy",
-            24: NURSE_TONG, 25: NURSE_TONG, 26: NURSE_TONG, 27: NURSE_TONG, 28: NURSE_TONG, 29: NURSE_TONG, 30: NURSE_TONG, 31: NURSE_TONG
-        },
-        "2027-0": { // January 2027
-            1: NURSE_TONG, 2: NURSE_TONG,
-            3: "Roselle", 4: "Roselle", 5: "Roselle", 6: "Roselle", 7: "Roselle", 8: "Roselle",
-            9: "Roena", 10: "Roena", 11: "Roena", 12: "Roena", 13: "Roena", 14: "Roena",
-            15: "Joy", 16: "Joy", 17: "Joy", 18: "Joy", 19: "Joy", 20: "Joy",
-            21: NURSE_TONG, 22: NURSE_TONG, 23: NURSE_TONG, 24: NURSE_TONG,
-            25: "Gina", 26: "Gina", 27: "Gina", 28: "Gina", 29: "Gina", 30: "Gina",
-            31: "Roselle"
-        },
-        "2027-1": { // February 2027
-            1: "Roselle", 2: "Roselle", 3: "Roselle", 4: "Roselle", 5: "Roselle",
-            6: "Roena", 7: "Roena", 8: "Roena", 9: "Roena", 10: "Roena", 11: "Roena",
-            12: "Joy", 13: "Joy", 14: "Joy", 15: "Joy", 16: "Joy", 17: "Joy",
-            18: NURSE_TONG, 19: NURSE_TONG, 20: NURSE_TONG, 21: NURSE_TONG,
-            22: "Gina", 23: "Gina", 24: "Gina", 25: "Gina", 26: "Gina", 27: "Gina",
-            28: "Roselle"
-        }
-    };
-
-    function generateEngineSchedule(targetYear, targetMonth) {
-        let schedule = {};
-        const key = `${targetYear}-${targetMonth}`;
-
-        if (APPROVED_ROSTERS[key]) {
-            const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-            for (let d = 1; d <= daysInMonth; d++) {
-                let dStr = formatDate(new Date(targetYear, targetMonth, d));
-                schedule[dStr] = APPROVED_ROSTERS[key][d] || NURSE_TONG;
-            }
-            return schedule;
-        }
-
-        // MARCH 2027 ONWARD ENGINE
-        let cursor = new Date(2027, 2, 1);
-        const targetEnd = new Date(targetYear, targetMonth + 1, 0);
-
-        let monthlyBlocks = {};
-        
-        for (let d = 1; d <= 5; d++) {
-            let dStr = formatDate(new Date(2027, 2, d));
-            schedule[dStr] = "Roselle";
-        }
-        monthlyBlocks["2027-2-Roselle"] = true;
-        cursor = new Date(2027, 2, 6);
-
-        while (cursor <= targetEnd) {
-            let y = cursor.getFullYear();
-            let m = cursor.getMonth();
-            let mKey = `${y}-${m}`;
-
-            let eligibleCandidates = [];
-
-            for (let name in HELPERS) {
-                if (!monthlyBlocks[`${mKey}-${name}`]) {
-                    if (!isHelperOnLeave(name, cursor)) {
-                        let startDay = HELPERS[name].day;
-                        let nextStart = new Date(cursor);
-                        while (nextStart.getDay() !== startDay) {
-                            nextStart.setDate(nextStart.getDate() + 1);
-                        }
-                        eligibleCandidates.push({ name: name, startDate: nextStart });
-                    }
-                }
-            }
-
-            let validCandidates = eligibleCandidates.filter(c => c.startDate.getMonth() === m);
-
-            if (validCandidates.length > 0) {
-                validCandidates.sort((a, b) => a.startDate - b.startDate);
-                let chosen = validCandidates[0];
-
-                while (cursor < chosen.startDate && cursor <= targetEnd) {
-                    let dStr = formatDate(cursor);
-                    schedule[dStr] = NURSE_TONG;
-                    cursor.setDate(cursor.getDate() + 1);
-                }
-
-                let blockMonth = cursor.getMonth();
-                for (let i = 0; i < 6; i++) {
-                    if (cursor > targetEnd) break;
-                    let dStr = formatDate(cursor);
-                    if (!schedule[dStr]) schedule[dStr] = chosen.name;
-                    cursor.setDate(cursor.getDate() + 1);
-                }
-
-                monthlyBlocks[`${y}-${blockMonth}-${chosen.name}`] = true;
-            } else {
-                let dStr = formatDate(cursor);
-                if (!schedule[dStr]) schedule[dStr] = NURSE_TONG;
-                cursor.setDate(cursor.getDate() + 1);
-            }
-        }
-
-        return schedule;
-    }
-
-    function isHelperOnLeave(helperName, date) {
-        let dStr = formatDate(date);
-        return leaveRecords.some(r => r.helper === helperName && dStr >= r.from && dStr <= r.to);
-    }
-
-    function render() {
-        const monthNames = ["January", "February", "March", "April", "May", "June", 
-                            "July", "August", "September", "October", "November", "December"];
-        document.getElementById("monthYearDisplay").innerText = `${monthNames[currentMonth]} ${currentYear}`;
-
-        // Disable Previous button if at September 2026 boundary
-        const isAtBoundary = (currentYear === 2026 && currentMonth === 8);
-        document.getElementById("prevBtn").disabled = isAtBoundary;
-
-        let autoSchedule = generateEngineSchedule(currentYear, currentMonth);
-
-        let firstDay = new Date(currentYear, currentMonth, 1).getDay();
-        let totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        let grid = document.getElementById("calendarGrid");
-        grid.innerHTML = "";
-
-        for (let i = 0; i < firstDay; i++) {
-            let emptyCell = document.createElement("div");
-            emptyCell.className = "day-cell empty";
-            grid.appendChild(emptyCell);
-        }
-
-        let scheduledCounts = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0, 'Nurse Tong': 0 };
-        let actualCounts = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0, 'Nurse Tong': 0 };
-
-        for (let day = 1; day <= totalDays; day++) {
-            let dateObj = new Date(currentYear, currentMonth, day);
-            let dStr = formatDate(dateObj);
-
-            let scheduledAssignment = autoSchedule[dStr] || NURSE_TONG;
-            let actualAssignment = manualOverrides[dStr] || scheduledAssignment;
-
-            if (scheduledCounts[scheduledAssignment] !== undefined) scheduledCounts[scheduledAssignment]++;
-            if (actualCounts[actualAssignment] !== undefined) actualCounts[actualAssignment]++;
-
-            let isOverridden = manualOverrides[dStr] && manualOverrides[dStr] !== scheduledAssignment;
-            let helperClass = getHelperClass(actualAssignment);
-
-            let cell = document.createElement("div");
-            cell.className = "day-cell";
-
-            cell.innerHTML = `
-                <div class="day-num">${day}</div>
-                <div class="assignment ${helperClass}">
-                    ${actualAssignment}${isOverridden ? '<span class="override-marker">*</span>' : ''}
-                </div>
-                <div class="cell-actions no-print">
-                    <select onchange="handleOverride('${dStr}', this.value, '${scheduledAssignment}')">
-                        <option value="Gina" ${actualAssignment === 'Gina' ? 'selected' : ''}>Gina</option>
-                        <option value="Joy" ${actualAssignment === 'Joy' ? 'selected' : ''}>Joy</option>
-                        <option value="Roena" ${actualAssignment === 'Roena' ? 'selected' : ''}>Roena</option>
-                        <option value="Roselle" ${actualAssignment === 'Roselle' ? 'selected' : ''}>Roselle</option>
-                        <option value="Nurse Tong" ${actualAssignment === 'Nurse Tong' ? 'selected' : ''}>Nurse Tong</option>
-                    </select>
-                    ${isOverridden ? `<br><button style="font-size:0.65rem; padding:1px 3px; margin-top:2px;" onclick="restoreOriginal('${dStr}')">Restore</button>` : ''}
-                </div>
-            `;
-            grid.appendChild(cell);
-        }
-
-        renderScheduledActualTable(scheduledCounts, actualCounts);
-        renderFairnessTable();
-        renderLeaveTable();
-    }
-
-    function handleOverride(dStr, newHelper, scheduledHelper) {
-        let previousAssignment = manualOverrides[dStr] || scheduledHelper;
-        if (newHelper === previousAssignment) return;
-
-        if (manualOverrides[dStr]) {
-            adjustFairnessLedger(scheduledHelper, previousAssignment, -1);
-        }
-
-        if (newHelper === scheduledHelper) {
-            delete manualOverrides[dStr];
-        } else {
-            manualOverrides[dStr] = newHelper;
-            adjustFairnessLedger(scheduledHelper, newHelper, 1);
-        }
-
-        normalizeFairness();
-        saveLocalStorage();
-        render();
-    }
-
-    function adjustFairnessLedger(originalScheduled, currentlyAssigned, direction) {
-        if (HELPERS[originalScheduled]) {
-            fairnessBalance[originalScheduled] += (1 * direction);
-        }
-        if (HELPERS[currentlyAssigned]) {
-            fairnessBalance[currentlyAssigned] -= (1 * direction);
-        }
-    }
-
-    function restoreOriginal(dStr) {
-        if (manualOverrides[dStr]) {
-            let autoSchedule = generateEngineSchedule(currentYear, currentMonth);
-            let scheduledHelper = autoSchedule[dStr] || NURSE_TONG;
-            let currentAssigned = manualOverrides[dStr];
-
-            adjustFairnessLedger(scheduledHelper, currentAssigned, -1);
-            delete manualOverrides[dStr];
-
-            saveLocalStorage();
-            render();
-        }
-    }
-
-    function resetMonthOverrides() {
-        let autoSchedule = generateEngineSchedule(currentYear, currentMonth);
-        let totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        for (let day = 1; day <= totalDays; day++) {
-            let dStr = formatDate(new Date(currentYear, currentMonth, day));
-            if (manualOverrides[dStr]) {
-                let scheduledHelper = autoSchedule[dStr] || NURSE_TONG;
-                adjustFairnessLedger(scheduledHelper, manualOverrides[dStr], -1);
-                delete manualOverrides[dStr];
-            }
-        }
-        saveLocalStorage();
-        render();
-    }
-
-    function changeMonth(delta) {
-        if (currentYear === 2026 && currentMonth === 8 && delta < 0) return; // Prevent going before Sept 2026
-
-        currentMonth += delta;
-        if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-        } else if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-        render();
-    }
-
-    function normalizeFairness() {
-        let min = Math.min(fairnessBalance.Gina, fairnessBalance.Joy, fairnessBalance.Roena, fairnessBalance.Roselle);
-        if (min >= 1) {
-            fairnessBalance.Gina -= min;
-            fairnessBalance.Joy -= min;
-            fairnessBalance.Roena -= min;
-            fairnessBalance.Roselle -= min;
-        }
-    }
-
-    function resetFairnessBalance() {
-        fairnessBalance = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0 };
-        saveLocalStorage();
-        render();
-    }
-
-    function renderFairnessTable() {
-        document.getElementById("fairnessRow").innerHTML = `
-            <td>${fairnessBalance.Gina > 0 ? '+' + fairnessBalance.Gina : fairnessBalance.Gina}</td>
-            <td>${fairnessBalance.Joy > 0 ? '+' + fairnessBalance.Joy : fairnessBalance.Joy}</td>
-            <td>${fairnessBalance.Roena > 0 ? '+' + fairnessBalance.Roena : fairnessBalance.Roena}</td>
-            <td>${fairnessBalance.Roselle > 0 ? '+' + fairnessBalance.Roselle : fairnessBalance.Roselle}</td>
-        `;
-    }
-
-    function addLeaveRecord() {
-        let helper = document.getElementById("leaveHelper").value;
-        let from = document.getElementById("leaveFrom").value;
-        let to = document.getElementById("leaveTo").value;
-
-        if (!from || !to) return alert("Please select both From and To dates.");
-        if (from > to) return alert("'From Date' cannot be after 'To Date'.");
-
-        leaveRecords.push({ id: Date.now(), helper, from, to });
-        saveLocalStorage();
-        render();
-    }
-
-    function deleteLeaveRecord(id) {
-        leaveRecords = leaveRecords.filter(r => r.id !== id);
-        saveLocalStorage();
-        render();
-    }
-
-    function renderLeaveTable() {
-        let tbody = document.getElementById("leaveTableBody");
-        tbody.innerHTML = "";
-        if (leaveRecords.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="color:#94a3b8;">No leave records stored.</td></tr>`;
-            return;
-        }
-
-        leaveRecords.forEach(r => {
-            let tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td class="${getHelperClass(r.helper)}">${r.helper}</td>
-                <td>${r.from}</td>
-                <td>${r.to}</td>
-                <td>
-                    <button class="btn-danger" style="padding:2px 6px; font-size:0.75rem;" onclick="deleteLeaveRecord(${r.id})">Delete</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+        let selectOptions = `<option value="DEFAULT" ${!overrides[dateKey] ? 'selected' : ''}>Auto (${defaultPerson})</option>`;
+        allAssignees.forEach(p => {
+          selectOptions += `<option value="${p}" ${overrides[dateKey] === p ? 'selected' : ''}>${p}</option>`;
         });
-    }
 
-    function renderScheduledActualTable(s, a) {
-        let tbody = document.getElementById("scheduledActualBody");
-        tbody.innerHTML = `
-            <tr>
-                <td><strong>Scheduled</strong></td>
-                <td>${s.Gina}</td>
-                <td>${s.Joy}</td>
-                <td>${s.Roena}</td>
-                <td>${s.Roselle}</td>
-                <td>${s['Nurse Tong']}</td>
-            </tr>
-            <tr>
-                <td><strong>Actual</strong></td>
-                <td>${a.Gina}</td>
-                <td>${a.Joy}</td>
-                <td>${a.Roena}</td>
-                <td>${a.Roselle}</td>
-                <td>${a['Nurse Tong']}</td>
-            </tr>
+        cell.innerHTML = `
+          <div class="day-number">${day}</div>
+          <div class="assigned-person">${actualPerson}</div>
+          <select class="override-select" onchange="handleOverrideChange('${dateKey}', this.value)">
+            ${selectOptions}
+          </select>
         `;
+        calendarGrid.appendChild(cell);
+      }
+
+      renderCountsTable(monthlyCounts);
+      renderFairnessTable(monthlyCounts, totalDays);
     }
 
-    function formatDate(d) {
-        let year = d.getFullYear();
-        let month = String(d.getMonth() + 1).padStart(2, '0');
-        let day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+    function renderCountsTable(counts) {
+      const tbody = document.getElementById('countsTableBody');
+      tbody.innerHTML = '';
+      allAssignees.forEach(person => {
+        const data = counts[person];
+        const row = `<tr>
+          <td><strong>${person}</strong></td>
+          <td>${data.regular}</td>
+          <td>${data.leaves}</td>
+          <td>${data.covers}</td>
+          <td><strong>${data.total}</strong></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
     }
 
-    function getHelperClass(name) {
-        if (HELPERS[name]) return HELPERS[name].class;
-        if (name === NURSE_TONG) return 'helper-tong';
-        return '';
+    function renderFairnessTable(counts, totalDays) {
+      const tbody = document.getElementById('fairnessTableBody');
+      tbody.innerHTML = '';
+      const targetPerHelper = (totalDays / helpers.length).toFixed(1);
+
+      helpers.forEach(person => {
+        const actual = counts[person].total;
+        const variance = (actual - targetPerHelper).toFixed(1);
+        const varianceDisplay = variance > 0 ? `+${variance}` : variance;
+
+        const row = `<tr>
+          <td><strong>${person}</strong></td>
+          <td>${targetPerHelper}</td>
+          <td>${actual}</td>
+          <td><strong style="color: ${variance < 0 ? '#e53e3e' : '#2b6cb0'};">${varianceDisplay}</strong></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
     }
-</script>
+  </script>
 </body>
 </html>
