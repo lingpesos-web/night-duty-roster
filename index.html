@@ -180,17 +180,15 @@
 <body>
 
 <div class="container">
-    <header>
-        <div>
-            <h1 id="monthYearDisplay">September 2026</h1>
-        </div>
-        <div class="controls no-print">
-            <span id="syncStatus" class="sync-status">Local Mode</span>
-            <label style="font-size:0.85rem; font-weight:500;">Print Mode:
-                <select id="printOrientation" onchange="setPrintOrientation(this.value)">
-                    <option value="landscape" selected>Landscape</option>
-                    <option value="portrait">Portrait</option>
-                </select>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDkk8w01GD2mJg-KPzSxe15V9eCSPcigw8",
+        authDomain: "night-duty-roster-d4fd1.firebaseapp.com",
+        databaseURL: "https://night-duty-roster-d4fd1-default-rtdb.firebaseio.com",
+        projectId: "night-duty-roster-d4fd1",
+        storageBucket: "night-duty-roster-d4fd1.firebasestorage.app",
+        messagingSenderId: "869781250238",
+        appId: "1:869781250238:web:47c8829f75c9b0c4d83eef"
+    };
             </label>
             <button id="prevBtn" onclick="changeMonth(-1)">&lt; Prev</button>
             <button id="nextBtn" onclick="changeMonth(1)">Next &gt;</button>
