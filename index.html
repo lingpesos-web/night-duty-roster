@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Night Duty Roster Manager</title>
-    <style id="printOrientationStyle">
-        @page { size: landscape; margin: 0.5cm; }
-    </style>
     <style>
+        @page { size: landscape; margin: 0.5cm; }
+        
         :root {
             --color-gina: #2563eb;
             --color-joy: #16a34a;
@@ -65,6 +64,7 @@
         button.btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
         button.btn-primary:hover { background: #1d4ed8; }
         button.btn-danger { background: #ef4444; color: #fff; border-color: #ef4444; }
+        button.btn-admin { background: #0f172a; color: #fff; border-color: #0f172a; }
 
         .helper-gina { color: var(--color-gina); font-weight: bold; }
         .helper-joy { color: var(--color-joy); font-weight: bold; }
@@ -91,7 +91,7 @@
         }
 
         .day-cell {
-            min-height: 75px;
+            min-height: 80px;
             border: 1px solid #e2e8f0;
             padding: 6px;
             background: #fff;
@@ -110,7 +110,7 @@
         .override-marker { color: #dc2626; font-weight: bold; margin-left: 2px; }
 
         .cell-actions { margin-top: 4px; text-align: center; }
-        .cell-actions select { font-size: 0.75rem; padding: 2px; }
+        .cell-actions select { font-size: 0.75rem; padding: 2px; max-width: 100%; }
 
         .dashboard-grid {
             display: grid;
@@ -160,6 +160,10 @@
         .sync-status.online { background: #dcfce7; color: #166534; }
         .sync-status.syncing { background: #fef3c7; color: #92400e; }
 
+        .admin-only { display: none !important; }
+        body.is-admin .admin-only { display: inline-block !important; }
+        body.is-admin div.admin-only { display: block !important; }
+
         @media print {
             body { background: #fff; padding: 0; }
             .container { box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
@@ -181,19 +185,14 @@
 <div class="container">
     <header>
         <div>
-            <h1 id="monthYearDisplay">September 2026</h1>
+            <h1 id="monthYearDisplay">Loading...</h1>
         </div>
         <div class="controls no-print">
             <span id="syncStatus" class="sync-status">Local Mode</span>
-            <label style="font-size:0.85rem; font-weight:500;">Print Mode:
-                <select id="printOrientation" onchange="setPrintOrientation(this.value)">
-                    <option value="landscape" selected>Landscape</option>
-                    <option value="portrait">Portrait</option>
-                </select>
-            </label>
+            <button id="adminToggleBtn" class="btn-admin" onclick="toggleAdminMode()">Unlock Admin</button>
             <button id="prevBtn" onclick="changeMonth(-1)">&lt; Prev</button>
             <button id="nextBtn" onclick="changeMonth(1)">Next &gt;</button>
-            <button onclick="resetMonthOverrides()" class="btn-danger">Reset Month Overrides</button>
+            <button onclick="resetMonthOverrides()" class="btn-danger admin-only">Reset Month Overrides</button>
             <button onclick="window.print()" class="btn-primary">Print Roster</button>
         </div>
     </header>
@@ -214,7 +213,7 @@
                         <th class="helper-joy">Joy</th>
                         <th class="helper-roena">Roena</th>
                         <th class="helper-roselle">Roselle</th>
-                        <th class="helper-tong">Tong</th>
+                        <th class="helper-tong">Nurse Tong</th>
                     </tr>
                 </thead>
                 <tbody id="scheduledActualBody"></tbody>
@@ -239,13 +238,13 @@
                     <tr id="fairnessRow"></tr>
                 </tbody>
             </table>
-            <div style="text-align:right; margin-top:6px;" class="no-print">
+            <div style="text-align:right; margin-top:6px;" class="no-print admin-only">
                 <button style="font-size:0.75rem; padding:2px 6px;" onclick="resetFairnessBalance()">Clear All Fairness (Reset to 0)</button>
             </div>
         </div>
     </div>
 
-    <div class="dashboard-grid no-print" style="grid-template-columns: 1fr; margin-top:15px;">
+    <div class="dashboard-grid no-print admin-only" style="grid-template-columns: 1fr; margin-top:15px;">
         <div class="section-box">
             <h3>Leave Management</h3>
             <div class="leave-form">
@@ -348,9 +347,18 @@
         'Roselle': { name: 'Roselle', day: 0, class: 'helper-roselle' }
     };
     const NURSE_TONG = 'Nurse Tong';
+    const ADMIN_PIN = "1234";
 
-    let currentYear = 2026;
-    let currentMonth = 8;
+    let isAdmin = false;
+    let today = new Date();
+    let currentYear = today.getFullYear();
+    let currentMonth = today.getMonth();
+
+    if (currentYear < 2026 || (currentYear === 2026 && currentMonth < 8)) {
+        currentYear = 2026;
+        currentMonth = 8;
+    }
+
     var manualOverrides = {};
     var leaveRecords = [];
     var fairnessBalance = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0 };
@@ -360,13 +368,22 @@
         render();
     };
 
-    function setPrintOrientation(mode) {
-        const styleTag = document.getElementById('printOrientationStyle');
-        if (mode === 'portrait') {
-            styleTag.innerHTML = '@page { size: portrait; margin: 0.5cm; }';
+    function toggleAdminMode() {
+        if (isAdmin) {
+            isAdmin = false;
+            document.body.classList.remove("is-admin");
+            document.getElementById("adminToggleBtn").innerText = "Unlock Admin";
         } else {
-            styleTag.innerHTML = '@page { size: landscape; margin: 0.5cm; }';
+            let pin = prompt("Enter Admin PIN:");
+            if (pin === ADMIN_PIN) {
+                isAdmin = true;
+                document.body.classList.add("is-admin");
+                document.getElementById("adminToggleBtn").innerText = "Lock Admin";
+            } else if (pin !== null) {
+                alert("Incorrect PIN!");
+            }
         }
+        render();
     }
 
     function loadLocalStorage() {
@@ -417,17 +434,19 @@
             8: "Roselle", 9: "Roselle", 10: "Roselle", 11: "Roselle", 12: "Roselle", 13: "Roselle",
             14: "Roena", 15: "Roena", 16: "Roena", 17: "Roena", 18: "Roena", 19: "Roena",
             20: "Joy", 21: "Joy", 22: "Joy", 23: "Joy", 24: "Joy", 25: "Joy",
-            26: NURSE_TONG, 27: NURSE_TONG, 28: NURSE_TONG, 29: NURSE_TONG, 30: NURSE_TONG
+            26: NURSE_TONG, 27: NURSE_TONG, 28: NURSE_TONG, 29: NURSE_TONG, 30: "Gina"
         },
         "2026-11": {
             1: "Gina", 2: "Gina", 3: "Gina", 4: "Gina", 5: "Gina",
             6: "Roena", 7: "Roena", 8: "Roena", 9: "Roena", 10: "Roena", 11: "Roena",
-            12: "Roselle", 13: "Roselle", 14: "Roselle", 15: "Roselle", 16: "Roselle", 17: "Roselle",
+            12: NURSE_TONG,
+            13: "Roselle", 14: "Roselle", 15: "Roselle", 16: "Roselle", 17: "Roselle",
             18: "Joy", 19: "Joy", 20: "Joy", 21: "Joy", 22: "Joy", 23: "Joy",
-            24: NURSE_TONG, 25: NURSE_TONG, 26: NURSE_TONG, 27: NURSE_TONG, 28: NURSE_TONG, 29: NURSE_TONG, 30: NURSE_TONG, 31: NURSE_TONG
+            24: NURSE_TONG, 25: NURSE_TONG, 26: NURSE_TONG, 27: NURSE_TONG,
+            28: "Gina", 29: "Gina", 30: "Gina", 31: "Gina"
         },
         "2027-0": {
-            1: NURSE_TONG, 2: NURSE_TONG,
+            1: "Gina", 2: "Gina",
             3: "Roselle", 4: "Roselle", 5: "Roselle", 6: "Roselle", 7: "Roselle", 8: "Roselle",
             9: "Roena", 10: "Roena", 11: "Roena", 12: "Roena", 13: "Roena", 14: "Roena",
             15: "Joy", 16: "Joy", 17: "Joy", 18: "Joy", 19: "Joy", 20: "Joy",
@@ -556,32 +575,41 @@
             let dStr = formatDate(dateObj);
 
             let scheduledAssignment = autoSchedule[dStr] || NURSE_TONG;
-            let actualAssignment = manualOverrides[dStr] || scheduledAssignment;
+            let overrideObj = manualOverrides[dStr];
+            let actualAssignment = overrideObj ? overrideObj.helper : scheduledAssignment;
 
             if (scheduledCounts[scheduledAssignment] !== undefined) scheduledCounts[scheduledAssignment]++;
             if (actualCounts[actualAssignment] !== undefined) actualCounts[actualAssignment]++;
 
-            let isOverridden = manualOverrides[dStr] && manualOverrides[dStr] !== scheduledAssignment;
+            let isOverridden = overrideObj && overrideObj.helper !== scheduledAssignment;
             let helperClass = getHelperClass(actualAssignment);
 
             let cell = document.createElement("div");
             cell.className = "day-cell";
+
+            let optionsHtml = '';
+            if (isAdmin) {
+                const helpersList = ["Gina", "Joy", "Roena", "Roselle", "Nurse Tong"];
+                optionsHtml = `
+                    <div class="cell-actions no-print admin-only">
+                        <select onchange="handleOverrideSelect('${dStr}', this.value, '${scheduledAssignment}')">
+                            <option value="">-- Change --</option>
+                            ${helpersList.map(h => `
+                                <option value="${h}|fairness" ${actualAssignment === h && overrideObj?.type === 'fairness' ? 'selected' : ''}>${h} (Fairness)</option>
+                                <option value="${h}|reshuffle" ${actualAssignment === h && overrideObj?.type === 'reshuffle' ? 'selected' : ''}>${h} (Reshuffle)</option>
+                            `).join('')}
+                        </select>
+                        ${isOverridden ? `<br><button style="font-size:0.65rem; padding:1px 3px; margin-top:2px;" onclick="restoreOriginal('${dStr}')">Restore</button>` : ''}
+                    </div>
+                `;
+            }
 
             cell.innerHTML = `
                 <div class="day-num">${day}</div>
                 <div class="assignment ${helperClass}">
                     ${actualAssignment}${isOverridden ? '<span class="override-marker">*</span>' : ''}
                 </div>
-                <div class="cell-actions no-print">
-                    <select onchange="handleOverride('${dStr}', this.value, '${scheduledAssignment}')">
-                        <option value="Gina" ${actualAssignment === 'Gina' ? 'selected' : ''}>Gina</option>
-                        <option value="Joy" ${actualAssignment === 'Joy' ? 'selected' : ''}>Joy</option>
-                        <option value="Roena" ${actualAssignment === 'Roena' ? 'selected' : ''}>Roena</option>
-                        <option value="Roselle" ${actualAssignment === 'Roselle' ? 'selected' : ''}>Roselle</option>
-                        <option value="Nurse Tong" ${actualAssignment === 'Nurse Tong' ? 'selected' : ''}>Nurse Tong</option>
-                    </select>
-                    ${isOverridden ? `<br><button style="font-size:0.65rem; padding:1px 3px; margin-top:2px;" onclick="restoreOriginal('${dStr}')">Restore</button>` : ''}
-                </div>
+                ${optionsHtml}
             `;
             grid.appendChild(cell);
         }
@@ -591,19 +619,23 @@
         renderLeaveTable();
     }
 
-    function handleOverride(dStr, newHelper, scheduledHelper) {
-        let previousAssignment = manualOverrides[dStr] || scheduledHelper;
-        if (newHelper === previousAssignment) return;
+    function handleOverrideSelect(dStr, val, scheduledHelper) {
+        if (!val) return;
+        let [newHelper, type] = val.split('|');
+        let currentOverride = manualOverrides[dStr];
+        let previousAssignment = currentOverride ? currentOverride.helper : scheduledHelper;
 
-        if (manualOverrides[dStr]) {
+        if (currentOverride && currentOverride.type === 'fairness') {
             adjustFairnessLedger(scheduledHelper, previousAssignment, -1);
         }
 
         if (newHelper === scheduledHelper) {
             delete manualOverrides[dStr];
         } else {
-            manualOverrides[dStr] = newHelper;
-            adjustFairnessLedger(scheduledHelper, newHelper, 1);
+            manualOverrides[dStr] = { helper: newHelper, type: type };
+            if (type === 'fairness') {
+                adjustFairnessLedger(scheduledHelper, newHelper, 1);
+            }
         }
 
         normalizeFairness();
@@ -624,9 +656,11 @@
         if (manualOverrides[dStr]) {
             let autoSchedule = generateEngineSchedule(currentYear, currentMonth);
             let scheduledHelper = autoSchedule[dStr] || NURSE_TONG;
-            let currentAssigned = manualOverrides[dStr];
+            let currentOverride = manualOverrides[dStr];
 
-            adjustFairnessLedger(scheduledHelper, currentAssigned, -1);
+            if (currentOverride.type === 'fairness') {
+                adjustFairnessLedger(scheduledHelper, currentOverride.helper, -1);
+            }
             delete manualOverrides[dStr];
 
             saveLocalStorage();
@@ -642,7 +676,9 @@
             let dStr = formatDate(new Date(currentYear, currentMonth, day));
             if (manualOverrides[dStr]) {
                 let scheduledHelper = autoSchedule[dStr] || NURSE_TONG;
-                adjustFairnessLedger(scheduledHelper, manualOverrides[dStr], -1);
+                if (manualOverrides[dStr].type === 'fairness') {
+                    adjustFairnessLedger(scheduledHelper, manualOverrides[dStr].helper, -1);
+                }
                 delete manualOverrides[dStr];
             }
         }
@@ -675,9 +711,11 @@
     }
 
     function resetFairnessBalance() {
-        fairnessBalance = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0 };
-        saveLocalStorage();
-        render();
+        if (confirm("Are you sure you want to reset all fairness balances to 0? This cannot be undone.")) {
+            fairnessBalance = { Gina: 0, Joy: 0, Roena: 0, Roselle: 0 };
+            saveLocalStorage();
+            render();
+        }
     }
 
     function renderFairnessTable() {
