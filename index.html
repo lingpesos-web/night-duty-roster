@@ -8,11 +8,11 @@
         @page { size: landscape; margin: 0.5cm; }
         
         :root {
-            --color-gina: #2563eb;
-            --color-joy: #16a34a;
-            --color-roena: #d97706;
-            --color-roselle: #9333ea;
-            --color-tong: #dc2626;
+            --color-gina: #991b1b;
+            --color-joy: #92400e;
+            --color-roena: #166534;
+            --color-roselle: #6b21a8;
+            --color-tong: #334155;
         }
 
         body {
@@ -66,11 +66,23 @@
         button.btn-danger { background: #ef4444; color: #fff; border-color: #ef4444; }
         button.btn-admin { background: #0f172a; color: #fff; border-color: #0f172a; }
 
-        .helper-gina { color: var(--color-gina); font-weight: bold; }
-        .helper-joy { color: var(--color-joy); font-weight: bold; }
-        .helper-roena { color: var(--color-roena); font-weight: bold; }
-        .helper-roselle { color: var(--color-roselle); font-weight: bold; }
-        .helper-tong { color: var(--color-tong); font-weight: bold; }
+        .helper-gina { color: #991b1b; }
+        .helper-joy { color: #92400e; }
+        .helper-roena { color: #166534; }
+        .helper-roselle { color: #6b21a8; }
+        .helper-tong { color: #334155; }
+
+        /* Unified Calendar Alignment Wrapper */
+        .calendar-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .calendar-inner {
+            min-width: 700px; /* Header & Grid scroll together seamlessly */
+        }
 
         .calendar-header {
             display: grid;
@@ -78,39 +90,55 @@
             text-align: center;
             font-weight: bold;
             font-size: 0.95rem;
-            background: #f1f5f9;
-            padding: 8px 0;
-            border: 1px solid #cbd5e1;
-            border-bottom: none;
+            background: #e2e8f0;
+            padding: 10px 0;
+            border-bottom: 1px solid #cbd5e1;
         }
 
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            border: 1px solid #cbd5e1;
         }
 
         .day-cell {
-            min-height: 80px;
-            border: 1px solid #e2e8f0;
+            min-height: 90px;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
             padding: 6px;
             background: #fff;
             position: relative;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
+        .day-cell:nth-child(7n) { border-right: none; }
         .day-cell.empty { background: #f8fafc; }
-        .day-num { font-weight: bold; font-size: 0.85rem; color: #64748b; }
+        .day-num { font-weight: bold; font-size: 0.85rem; color: #64748b; margin-bottom: 4px; }
 
-        .assignment {
-            margin-top: 4px;
-            font-size: 1.05rem;
+        /* Full-Width Pastel Banners (Exact colors from reference photo) */
+        .banner-box {
+            display: block;
+            width: 100%;
+            padding: 4px 0;
             text-align: center;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            margin-bottom: 4px;
         }
+        .banner-gina { background-color: #fde8e8; color: #991b1b; border: 1px solid #fbd5d5; }
+        .banner-joy { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .banner-roena { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .banner-roselle { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+        .banner-tong { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
 
         .override-marker { color: #dc2626; font-weight: bold; margin-left: 2px; }
 
-        .cell-actions { margin-top: 4px; text-align: center; }
-        .cell-actions select { font-size: 0.75rem; padding: 2px; max-width: 100%; }
+        .cell-actions { text-align: center; margin-top: auto; }
+        .cell-actions select { font-size: 0.75rem; padding: 2px; width: 100%; box-sizing: border-box; }
 
         .dashboard-grid {
             display: grid;
@@ -168,8 +196,10 @@
             body { background: #fff; padding: 0; }
             .container { box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
             .no-print { display: none !important; }
-            .day-cell { min-height: 58px !important; padding: 4px !important; }
-            .assignment { font-size: 0.95rem !important; margin-top: 2px !important; }
+            .calendar-wrapper { border: none; overflow: visible; }
+            .calendar-inner { min-width: 100%; }
+            .day-cell { min-height: 58px !important; padding: 3px !important; }
+            .banner-box { font-size: 0.8rem !important; padding: 2px 0 !important; }
             .calendar-header { padding: 6px 0 !important; font-size: 0.85rem !important; }
             .dashboard-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; margin-top: 12px !important; }
             .section-box { padding: 10px !important; }
@@ -197,10 +227,14 @@
         </div>
     </header>
 
-    <div class="calendar-header">
-        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    <div class="calendar-wrapper">
+        <div class="calendar-inner">
+            <div class="calendar-header">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+            </div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
     </div>
-    <div id="calendarGrid" class="calendar-grid"></div>
 
     <div class="dashboard-grid">
         <div class="section-box">
@@ -341,10 +375,10 @@
 
 <script>
     const HELPERS = {
-        'Gina': { name: 'Gina', day: 1, class: 'helper-gina' },
-        'Joy': { name: 'Joy', day: 5, class: 'helper-joy' },
-        'Roena': { name: 'Roena', day: 6, class: 'helper-roena' },
-        'Roselle': { name: 'Roselle', day: 0, class: 'helper-roselle' }
+        'Gina': { name: 'Gina', day: 1, class: 'banner-gina' },
+        'Joy': { name: 'Joy', day: 5, class: 'banner-joy' },
+        'Roena': { name: 'Roena', day: 6, class: 'banner-roena' },
+        'Roselle': { name: 'Roselle', day: 0, class: 'banner-roselle' }
     };
     const NURSE_TONG = 'Nurse Tong';
     const ADMIN_PIN = "1234";
@@ -471,20 +505,27 @@
         if (APPROVED_ROSTERS[key]) {
             const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
             for (let d = 1; d <= daysInMonth; d++) {
-                let dStr = formatDate(new Date(targetYear, targetMonth, d));
-                schedule[dStr] = APPROVED_ROSTERS[key][d] || NURSE_TONG;
+                let dateObj = new Date(targetYear, targetMonth, d);
+                let dStr = formatDate(dateObj);
+                let assigned = APPROVED_ROSTERS[key][d] || NURSE_TONG;
+                
+                if (assigned !== NURSE_TONG && isHelperOnLeave(assigned, dateObj)) {
+                    schedule[dStr] = NURSE_TONG;
+                } else {
+                    schedule[dStr] = assigned;
+                }
             }
             return schedule;
         }
 
         let cursor = new Date(2027, 2, 1);
         const targetEnd = new Date(targetYear, targetMonth + 1, 0);
-
         let monthlyBlocks = {};
         
         for (let d = 1; d <= 5; d++) {
-            let dStr = formatDate(new Date(2027, 2, d));
-            schedule[dStr] = "Roselle";
+            let dObj = new Date(2027, 2, d);
+            let dStr = formatDate(dObj);
+            schedule[dStr] = isHelperOnLeave("Roselle", dObj) ? NURSE_TONG : "Roselle";
         }
         monthlyBlocks["2027-2-Roselle"] = true;
         cursor = new Date(2027, 2, 6);
@@ -525,7 +566,9 @@
                 for (let i = 0; i < 6; i++) {
                     if (cursor > targetEnd) break;
                     let dStr = formatDate(cursor);
-                    if (!schedule[dStr]) schedule[dStr] = chosen.name;
+                    if (!schedule[dStr]) {
+                        schedule[dStr] = isHelperOnLeave(chosen.name, cursor) ? NURSE_TONG : chosen.name;
+                    }
                     cursor.setDate(cursor.getDate() + 1);
                 }
 
@@ -582,7 +625,7 @@
             if (actualCounts[actualAssignment] !== undefined) actualCounts[actualAssignment]++;
 
             let isOverridden = overrideObj && overrideObj.helper !== scheduledAssignment;
-            let helperClass = getHelperClass(actualAssignment);
+            let bannerClass = getBannerClass(actualAssignment);
 
             let cell = document.createElement("div");
             cell.className = "day-cell";
@@ -605,9 +648,11 @@
             }
 
             cell.innerHTML = `
-                <div class="day-num">${day}</div>
-                <div class="assignment ${helperClass}">
-                    ${actualAssignment}${isOverridden ? '<span class="override-marker">*</span>' : ''}
+                <div>
+                    <div class="day-num">${day}</div>
+                    <div class="banner-box ${bannerClass}">
+                        ${actualAssignment}${isOverridden ? '<span class="override-marker">*</span>' : ''}
+                    </div>
                 </div>
                 ${optionsHtml}
             `;
@@ -757,7 +802,7 @@
         leaveRecords.forEach(r => {
             let tr = document.createElement("tr");
             tr.innerHTML = `
-                <td class="${getHelperClass(r.helper)}">${r.helper}</td>
+                <td><span class="banner-box ${getBannerClass(r.helper)}" style="display:inline-block; padding:2px 8px; font-size:0.8rem; margin:0;">${r.helper}</span></td>
                 <td>${r.from}</td>
                 <td>${r.to}</td>
                 <td>
@@ -797,9 +842,9 @@
         return `${year}-${month}-${day}`;
     }
 
-    function getHelperClass(name) {
+    function getBannerClass(name) {
         if (HELPERS[name]) return HELPERS[name].class;
-        if (name === NURSE_TONG) return 'helper-tong';
+        if (name === NURSE_TONG) return 'banner-tong';
         return '';
     }
 </script>
