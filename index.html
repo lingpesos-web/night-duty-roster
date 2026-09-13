@@ -12,7 +12,7 @@
             --color-joy: #92400e;
             --color-roena: #166534;
             --color-roselle: #6b21a8;
-            --color-tong: #334155;
+            --color-tong: #1e40af;
         }
 
         body {
@@ -70,7 +70,7 @@
         .helper-joy { color: #92400e; }
         .helper-roena { color: #166534; }
         .helper-roselle { color: #6b21a8; }
-        .helper-tong { color: #334155; }
+        .helper-tong { color: #1e40af; }
 
         /* Unified Calendar Alignment Wrapper */
         .calendar-wrapper {
@@ -81,7 +81,7 @@
         }
 
         .calendar-inner {
-            min-width: 700px; /* Header & Grid scroll together seamlessly */
+            min-width: 700px;
         }
 
         .calendar-header {
@@ -117,7 +117,7 @@
         .day-cell.empty { background: #f8fafc; }
         .day-num { font-weight: bold; font-size: 0.85rem; color: #64748b; margin-bottom: 4px; }
 
-        /* Full-Width Pastel Banners (Exact colors from reference photo) */
+        /* Full-Width Pastel Banners */
         .banner-box {
             display: block;
             width: 100%;
@@ -133,7 +133,7 @@
         .banner-joy { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
         .banner-roena { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .banner-roselle { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
-        .banner-tong { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        .banner-tong { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
 
         .override-marker { color: #dc2626; font-weight: bold; margin-left: 2px; }
 
@@ -521,7 +521,8 @@
         let cursor = new Date(2027, 2, 1);
         const targetEnd = new Date(targetYear, targetMonth + 1, 0);
         let monthlyBlocks = {};
-        
+        let tongMonthlyCount = {};
+
         for (let d = 1; d <= 5; d++) {
             let dObj = new Date(2027, 2, d);
             let dStr = formatDate(dObj);
@@ -539,12 +540,23 @@
 
             for (let name in HELPERS) {
                 if (!monthlyBlocks[`${mKey}-${name}`]) {
-                    if (!isHelperOnLeave(name, cursor)) {
-                        let startDay = HELPERS[name].day;
-                        let nextStart = new Date(cursor);
-                        while (nextStart.getDay() !== startDay) {
-                            nextStart.setDate(nextStart.getDate() + 1);
+                    let startDay = HELPERS[name].day;
+                    let nextStart = new Date(cursor);
+                    while (nextStart.getDay() !== startDay) {
+                        nextStart.setDate(nextStart.getDate() + 1);
+                    }
+                    
+                    let hasLeaveInBlock = false;
+                    let testDate = new Date(nextStart);
+                    for (let i = 0; i < 6; i++) {
+                        if (isHelperOnLeave(name, testDate)) {
+                            hasLeaveInBlock = true;
+                            break;
                         }
+                        testDate.setDate(testDate.getDate() + 1);
+                    }
+
+                    if (!hasLeaveInBlock) {
                         eligibleCandidates.push({ name: name, startDate: nextStart });
                     }
                 }
@@ -558,7 +570,13 @@
 
                 while (cursor < chosen.startDate && cursor <= targetEnd) {
                     let dStr = formatDate(cursor);
-                    schedule[dStr] = NURSE_TONG;
+                    let mCountKey = `${cursor.getFullYear()}-${cursor.getMonth()}`;
+                    if ((tongMonthlyCount[mCountKey] || 0) < 10) {
+                        schedule[dStr] = NURSE_TONG;
+                        tongMonthlyCount[mCountKey] = (tongMonthlyCount[mCountKey] || 0) + 1;
+                    } else {
+                        schedule[dStr] = getFallbackHelper(cursor, schedule);
+                    }
                     cursor.setDate(cursor.getDate() + 1);
                 }
 
@@ -567,7 +585,11 @@
                     if (cursor > targetEnd) break;
                     let dStr = formatDate(cursor);
                     if (!schedule[dStr]) {
-                        schedule[dStr] = isHelperOnLeave(chosen.name, cursor) ? NURSE_TONG : chosen.name;
+                        if (isHelperOnLeave(chosen.name, cursor)) {
+                            schedule[dStr] = NURSE_TONG;
+                        } else {
+                            schedule[dStr] = chosen.name;
+                        }
                     }
                     cursor.setDate(cursor.getDate() + 1);
                 }
@@ -575,12 +597,27 @@
                 monthlyBlocks[`${y}-${blockMonth}-${chosen.name}`] = true;
             } else {
                 let dStr = formatDate(cursor);
-                if (!schedule[dStr]) schedule[dStr] = NURSE_TONG;
+                let mCountKey = `${cursor.getFullYear()}-${cursor.getMonth()}`;
+                if (!schedule[dStr]) {
+                    if ((tongMonthlyCount[mCountKey] || 0) < 10) {
+                        schedule[dStr] = NURSE_TONG;
+                        tongMonthlyCount[mCountKey] = (tongMonthlyCount[mCountKey] || 0) + 1;
+                    } else {
+                        schedule[dStr] = getFallbackHelper(cursor, schedule);
+                    }
+                }
                 cursor.setDate(cursor.getDate() + 1);
             }
         }
 
         return schedule;
+    }
+
+    function getFallbackHelper(dateObj, currentSchedule) {
+        for (let name in HELPERS) {
+            if (!isHelperOnLeave(name, dateObj)) return name;
+        }
+        return NURSE_TONG;
     }
 
     function isHelperOnLeave(helperName, date) {
